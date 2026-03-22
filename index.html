@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhoISThis? - Domain Info Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+    .record {
+      padding: 5px;
+      margin: 5px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .record:hover {
+      background-color: #e0e0e0;
+    }
+    .record::after {
+      content: attr(data-ttl);
+      position: absolute;
+      left: 100%;
+      top: 0;
+      background: black;
+      color: white;
+      padding: 3px 6px;
+      font-size: 12px;
+      visibility: hidden;
+    }
+    .record:hover::after {
+      visibility: visible;
+    }
+    .geo {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>WhoISThis?</h1>
+    <input type="text" id="domain" placeholder="Enter domain..." />
+    <button onclick="lookup()">Lookup</button>
+
+    <div id="results" class="result"></div>
+  </div>
+
+  <script>
+    async function lookup() {
+      const domain = document.getElementById("domain").value.trim();
+      if (!domain) return alert("Please enter a domain.");
+
+      // Show loading state
+      document.getElementById("results").innerHTML = "Loading...";
+
+      try {
+        // Fetch data from the API
+        const response = await fetch(`/api/lookup?domain=${domain}`);
+        const data = await response.json();
+
+        // Display DNS records with TTL hover
+        const records = data.dns.map(record => {
+          return `
+            <div class="record" data-ttl="TTL: ${record.ttl}">
+              ${record.type}: ${record.value}
+            </div>
+          `;
+        }).join("");
+
+        // Add geolocation info
+        const geoInfo = data.geo ? `
+          <div class="geo">
+            Geolocation: ${data.geo.city}, ${data.geo.region}, ${data.geo.country} <br>
+            Coordinates: ${data.geo.lat}, ${data.geo.lon}
+          </div>
+        ` : "";
+
+        // Show results
+        document.getElementById("results").innerHTML = records + geoInfo || "No DNS records found.";
+      } catch (err) {
+        document.getElementById("results").innerHTML = "Error fetching domain information.";
+      }
+    }
+  </script>
+</body>
+</html>
